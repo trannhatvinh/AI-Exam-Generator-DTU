@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Exam System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* Nhắc lại phần fix nhanh nếu bạn chưa kịp sửa file CSS riêng */
+        #main-wrapper { margin-left: 280px; min-height: 100vh; display: flex; flex-direction: column; }
+        main { flex: 1 0 auto; }
+        footer { flex-shrink: 0; }
+    </style>
+</head>
+<body>
+
+    <nav id="sidebar">
+    <div class="sidebar-header">
+        <h4><i class="fas fa-robot me-2"></i>AI EXAM</h4>
+    </div>
+    <div class="mt-4">
+        <a href="/" class="nav-link {% if request.path == '/' %}active{% endif %}">
+            <i class="fas fa-home me-2"></i> Trang chủ
+        </a>
+
+        <div class="px-4 mt-4 mb-2 text-muted small fw-bold">DỮ LIỆU</div>
+
+        <a href="/manage_topic_files" class="nav-link {% if request.path == '/manage_topic_files' %}active{% endif %}">
+            <i class="fas fa-folder me-2"></i> Quản lý File Chủ đề
+        </a>
+
+        <a href="/generate_bank" class="nav-link {% if request.path == '/generate_bank' %}active{% endif %}">
+            <i class="fas fa-brain me-2"></i> Sinh câu hỏi AI
+        </a>
+
+        <div class="px-4 mt-4 mb-2 text-muted small fw-bold">XUẤT BẢN</div>
+
+        <a href="/generate_exam" class="nav-link {% if request.path == '/generate_exam' %}active{% endif %}">
+            <i class="fas fa-file-word me-2"></i> Xuất Đề Thi Word
+        </a>
+    </div>
+</nav>
+
+    <div id="main-wrapper">
+        <header class="top-navbar justify-content-between">
+            <div class="fw-bold text-secondary small">
+                Hệ thống /
+                <span class="text-dark">
+                    {% if request.path == '/' %}
+                        Trang chủ
+                    {% elif request.path == '/manage_topic_files' %}
+                        Quản lý File Chủ đề
+                    {% elif request.path == '/generate_bank' %}
+                        Sinh câu hỏi AI
+                    {% elif request.path == '/generate_exam' %}
+                        Xuất Đề Thi Word
+                    {% else %}
+                        Chi tiết
+                    {% endif %}
+                </span>
+            </div>
+            <div class="d-flex align-items-center">
+                <span class="me-3 small fw-semibold text-dark">Duy Tan University</span>
+                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 35px; height: 35px;">
+                    <i class="fas fa-user small"></i>
+                </div>
+            </div>
+        </header>
+
+        <main>
+            {% block content %}
+<style>
+    .project-card { background: white; border-radius: 20px; padding: 20px; margin-bottom: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.04); border: 1px solid #f0f0f0; }
+    .section-tag { background: #e0f2fe; color: #0369a1; font-size: 0.75rem; font-weight: 800; padding: 4px 12px; border-radius: 50px; text-transform: uppercase; margin-bottom: 15px; display: inline-block; }
+    .step-box { position: relative; padding-left: 25px; border-left: 2px dashed #e2e8f0; margin-left: 15px; }
+    .step-box::before { content: ''; position: absolute; left: -9px; top: 0; width: 16px; height: 16px; background: #3b82f6; border: 4px solid white; border-radius: 50%; box-shadow: 0 0 0 1px #3b82f6; }
+    .feature-icon { width: 45px; height: 45px; background: #f8fafc; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #3b82f6; font-size: 1.2rem; }
+    .dev-avatar { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    .h-100{height:unset;}
+</style>
+
+<div class="animate-fade-in">
+    <div class="text-center mb-5">
+        <h1 class="display-6 fw-bold text-dark mb-2">AI Exam Generator</h1>
+        <p class="text-muted mx-auto" style="max-width: 750px;">
+            Ứng dụng tạo ngân hàng câu hỏi và xuất đề thi tự động hỗ trợ AI.
+        </p>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="project-card">
+                <span class="section-tag">Quy trình thực hiện</span>
+                <div class="mt-3">
+                    <div class="step-box mb-4 pb-2">
+                        <h6 class="fw-bold mb-1">1. Quản lý chủ đề & Nguồn tài liệu</h6>
+                        <p class="small text-muted mb-2">Tạo chủ đề, upload tài liệu (PDF, DOCX, TXT). Hệ thống tự động trích xuất nội dung để chuẩn bị cho AI phân tích.</p>
+                        <a href="/manage_topic_files" class="text-decoration-none small fw-bold"><i class="fas fa-arrow-right me-1"></i> Truy cập quản lý file</a>
+                    </div>
+
+                    <div class="step-box mb-4 pb-2">
+                        <h6 class="fw-bold mb-1">2. Sinh ngân hàng câu hỏi AI</h6>
+                        <p class="small text-muted mb-2">Sinh trắc nghiệm/tự luận dựa trên tài liệu. Hỗ trợ phân loại mức độ, chỉnh sửa & xóa câu hỏi trực tiếp trên giao diện web.</p>
+                        <a href="/generate_bank" class="text-decoration-none small fw-bold"><i class="fas fa-arrow-right me-1"></i> Đến trang sinh câu hỏi</a>
+                    </div>
+
+                    <div class="step-box">
+                        <h6 class="fw-bold mb-1">3. Xuất đề thi & Đáp án Word</h6>
+                        <p class="small text-muted mb-0">Sinh nhiều mã đề với số lượng câu, điểm, mức độ tự chọn. Xuất file Word và đáp án chuẩn theo format hội đồng Duy Tân.</p>
+                        <a href="/generate_exam" class="text-decoration-none small fw-bold"><i class="fas fa-arrow-right me-1"></i> Xuất bản đề thi</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="project-card">
+                <span class="section-tag">Tính năng hệ thống</span>
+                <div class="row g-4 mt-1">
+                    <div class="col-md-6 d-flex">
+                        <div class="feature-icon me-3"><i class="fas fa-microchip"></i></div>
+                        <div>
+                            <h6 class="fw-bold mb-1 small">AI Trích xuất & Đánh giá</h6>
+                            <p class="text-muted mb-0" style="font-size: 0.8rem;">Tích hợp mô hình ngôn ngữ lớn để tạo câu hỏi bám sát nội dung và đánh giá qua các chỉ số NLP.</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6 d-flex">
+                        <div class="feature-icon me-3"><i class="fas fa-file-word"></i></div>
+                        <div>
+                            <h6 class="fw-bold mb-1 small">Export Word Chuẩn</h6>
+                            <p class="text-muted mb-0" style="font-size: 0.8rem;">Đề thi được xuất ra định dạng .docx hoàn chỉnh bao gồm mã đề, đáp án và bảng Keys.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="project-card    ">
+                <span class="section-tag">Đội ngũ phát triển</span>
+                <div class="mt-3">
+                    <div class="d-flex align-items-center mb-4">
+                        <img src="https://avatars.githubusercontent.com/u/203066566?v=4" class="dev-avatar me-3" alt="Vinh">
+                        <div>
+                            <h6 class="fw-bold mb-0 small">Trần Nhật Vinh</h6>
+                            <span class="text-muted" style="font-size: 0.7rem;">Phát triển App + AI Exam</span>
+                        </div>
+                        <a href="https://github.com/trannhatvinh" target="_blank" class="ms-auto text-dark opacity-50"><i class="fab fa-github"></i></a>
+                    </div>
+                    <div class="d-flex align-items-center mb-4">
+                        <img src="https://avatars.githubusercontent.com/u/202948270?v=4" class="dev-avatar me-3" alt="Nin">
+                        <div>
+                            <h6 class="fw-bold mb-0 small">Hồ Lê Viết Nin</h6>
+                            <span class="text-muted" style="font-size: 0.7rem;">Review đề thi & Word Format</span>
+                        </div>
+                        <a href="https://github.com/holvietnin" target="_blank" class="ms-auto text-dark opacity-50"><i class="fab fa-github"></i></a>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <img src="https://avatars.githubusercontent.com/u/82451911?v=4" class="dev-avatar me-3" alt="Hiếu">
+                        <div>
+                            <h6 class="fw-bold mb-0 small">Ngô Văn Hiếu</h6>
+                            <span class="text-muted" style="font-size: 0.7rem;">Xử lý dữ liệu kiểm thử</span>
+                        </div>
+                        <a href="https://github.com/NgoVanHieu" target="_blank" class="ms-auto text-dark opacity-50"><i class="fab fa-github"></i></a>
+                    </div>
+                </div>
+
+                <div class="mt-5 p-3 rounded-4 bg-light border border-dashed">
+                    <h6 class="fw-bold small mb-1"><i class="fas fa-info-circle me-1 text-primary"></i> Thông tin dự án</h6>
+                    <p class="text-muted mb-0" style="font-size: 0.75rem;">Đây là dự án nghiên cứu khoa học tại <b>Đại học Duy Tân</b> nhằm ứng dụng AI vào khảo thí.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+        </main>
+
+        <footer>
+            <p class="mb-0 small fw-medium text-muted">
+                &copy; 2026 AI EXAM GENERATOR – Dự án nghiên cứu khoa học Đại học Duy Tân
+            </p>
+        </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

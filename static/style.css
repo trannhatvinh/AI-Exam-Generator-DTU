@@ -1,0 +1,124 @@
+:root {
+    --sidebar-bg: #ffffff;
+    --sidebar-color: #475569;
+    --sidebar-active-bg: #e0e7ff;
+    --sidebar-active-color: #4338ca;
+    --primary-color: #4f46e5;
+    --bg-main: #f3f4f6;
+    --header-bg: rgba(255, 255, 255, 0.85);
+    --card-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-main);
+    color: #1f2937;
+}
+
+/* Sidebar Sáng & Hiện Đại */
+#sidebar {
+    width: 280px;
+    height: 100vh;
+    position: fixed;
+    background: var(--sidebar-bg);
+    border-right: 1px solid #e5e7eb;
+    z-index: 1000;
+}
+
+.sidebar-header {
+    padding: 25px;
+    border-bottom: 1px solid #f3f4f6;
+}
+
+.sidebar-header h4 {
+    color: var(--primary-color);
+    font-weight: 800;
+    margin: 0;
+}
+
+.nav-link {
+    color: var(--sidebar-color);
+    padding: 12px 20px;
+    margin: 5px 15px;
+    border-radius: 10px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    transition: all 0.2s;
+}
+
+.nav-link i {
+    width: 25px;
+    font-size: 1.1rem;
+}
+
+.nav-link:hover {
+    background-color: #f9fafb;
+    color: var(--primary-color);
+}
+
+.nav-link.active {
+    background-color: var(--sidebar-active-bg);
+    color: var(--sidebar-active-color);
+}
+
+/* Main Layout */
+#main-wrapper {
+    margin-left: 280px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+header.top-navbar {
+    height: 65px;
+    background: var(--header-bg);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    padding: 0 30px;
+    position: sticky;
+    top: 0;
+    z-index: 999;
+}
+
+/* Cards & Components */
+.card-custom {
+    background: white;
+    border: none;
+    border-radius: 15px;
+    box-shadow: var(--card-shadow);
+    transition: transform 0.2s ease;
+}
+
+.card-custom:hover {
+    transform: translateY(-4px);
+}
+
+.btn-rounded {
+    border-radius: 50px;
+    padding: 10px 24px;
+    font-weight: 600;
+}
+
+/* --- Layout Fix --- */
+#main-wrapper {
+    margin-left: 280px;
+    min-height: 100vh; /* Chiều cao tối thiểu bằng cả màn hình */
+    display: flex;
+    flex-direction: column; /* Sắp xếp Header -> Main -> Footer theo chiều dọc */
+}
+
+main {
+    flex: 1 0 auto; /* Quan trọng: Đẩy footer xuống đáy */
+    padding: 40px;
+}
+
+footer {
+    flex-shrink: 0; /* Không cho phép footer bị co lại */
+    padding: 20px;
+    background: white;
+    border-top: 1px solid #e5e7eb;
+    text-align: center;
+}

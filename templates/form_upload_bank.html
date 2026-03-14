@@ -1,0 +1,339 @@
+{% extends "index.html" %}
+
+{% block content %}
+<style>
+    .card-custom { border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+    .btn-rounded { border-radius: 50px; font-weight: 600; }
+    .form-select, .form-control { border-radius: 10px; }
+    .list-group-item { border: 1px solid #f1f1f1; margin-bottom: 10px; border-radius: 10px !important; transition: 0.3s; }
+    .list-group-item:hover { background-color: #f8faff; }
+    .question-item { position: relative; padding-right: 100px !important; }
+    .question-actions { position: absolute; top: 15px; right: 15px; display: flex; gap: 8px; }
+    .btn-icon { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; transition: 0.2s; border: none; background: #f8fafc; }
+    .btn-edit-icon { color: #3b82f6; }
+    .btn-edit-icon:hover { background: #3b82f6; color: white; }
+    .btn-delete-icon { color: #ef4444; }
+    .btn-delete-icon:hover { background: #ef4444; color: white; }
+</style>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <h3 class="fw-bold mb-1">Quản lý Tài liệu & Ngân hàng câu hỏi</h3>
+        <p class="text-muted small">Tổ chức tài liệu theo chủ đề và quản lý danh sách câu hỏi AI đã sinh.</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="card card-custom border-0 p-4 mb-4">
+            <h5 class="fw-bold mb-4"><i class="fas fa-filter me-2 text-primary"></i>Cấu hình Chủ đề</h5>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                {% for category, message in messages %}
+                  <div class="alert alert-{{category}} alert-dismissible fade show small" role="alert">
+                    {{message}}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                  </div>
+                {% endfor %}
+              {% endif %}
+            {% endwith %}
+
+            <form method="POST" id="topic-form">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small">Chọn chủ đề hiện có:</label>
+                    <select name="topic" id="topic-select" class="form-select border-2">
+                        <option value="">-- Chọn chủ đề --</option>
+                        {% for t in all_topics %}
+                        <option value="{{ t }}" {% if t==current_topic %}selected{% endif %}>{{ t }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small">Hoặc tạo chủ đề mới:</label>
+                    <div class="input-group">
+                        <input type="text" name="new_topic" id="new-topic-input" class="form-control" placeholder="Tên chủ đề...">
+                        <button type="submit" name="action" value="add_topic" class="btn btn-primary">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            <hr class="my-4 opacity-25">
+
+            <form method="POST" enctype="multipart/form-data" id="upload-form">
+                <input type="hidden" name="topic" id="current-topic-upload" value="{{current_topic or ''}}">
+                <div class="mb-3">
+                    <label class="form-label fw-semibold small">Tải lên tài liệu mới:</label>
+                    <input type="file" name="file" class="form-control shadow-none border-2" id="file-upload" {% if not current_topic %}disabled{% endif %}>
+                    <div class="form-text mt-2" style="font-size: 0.75rem;">Hỗ trợ: .pdf, .docx, .txt</div>
+                </div>
+                <button type="submit" name="action" value="upload_file" class="btn btn-success w-100 btn-rounded py-2"
+                    {% if not current_topic %}disabled{% endif %}>
+                    <i class="fas fa-cloud-upload-alt me-2"></i>Tải lên ngay
+                </button>
+            </form>
+        </div>
+
+        <div class="card card-custom border-0 p-4" id="file-list-zone">
+            {% if current_topic %}
+                <h6 class="fw-bold mb-3 text-primary">Tài liệu của "{{ current_topic }}":</h6>
+                {% include 'partials/_file_list.html' %}
+            {% else %}
+                <div class="text-center py-4">
+                    <i class="fas fa-file-import fa-3x text-light mb-3"></i>
+                    <p class="text-muted small">Vui lòng chọn chủ đề để xem danh sách tài liệu.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card card-custom border-0 p-4">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="fw-bold mb-0"><i class="fas fa-list-ul me-2 text-primary"></i>Danh sách câu hỏi</h5>
+                <span id="q-count-badge" class="badge bg-primary text-white rounded-pill px-3">0 câu hỏi</span>
+            </div>
+
+            <div id="question-list-zone">
+                <div class="text-center py-5">
+                    <div class="spinner-border text-primary opacity-25" role="status"></div>
+                    <p class="text-muted mt-3">Chọn chủ đề để xem câu hỏi.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editQuestionModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <form class="modal-content border-0 shadow-lg" id="edit-question-form" style="border-radius: 20px;">
+      <div class="modal-header border-0 pb-0 pt-4 px-4">
+        <h5 class="modal-title fw-bold"><i class="fas fa-edit me-2 text-warning"></i>Cập nhật câu hỏi</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+      </div>
+      <div class="modal-body p-4">
+          <div class="mb-4">
+              <label class="form-label fw-bold small">Nội dung câu hỏi:</label>
+              <textarea id="question-input" class="form-control border-2 shadow-none" name="question" rows="3" required></textarea>
+          </div>
+          <div id="mcq-fields" style="display:none">
+              <label class="form-label fw-bold small mb-3">Các phương án:</label>
+              {% for i in range(4) %}
+              <div class="input-group mb-2">
+                  <span class="input-group-text border-0 bg-light fw-bold">{{ "ABCD"[i] }}</span>
+                  <input type="text" class="form-control border-2 shadow-none" id="opt{{i}}" placeholder="Phương án {{ "ABCD"[i] }}">
+              </div>
+              {% endfor %}
+              <div class="mt-4 p-3 bg-light rounded-3">
+                <label class="form-label fw-bold small d-block">Đáp án đúng:</label>
+                <select id="answer-select" class="form-select border-0 shadow-none">
+                  <option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option>
+                </select>
+              </div>
+          </div>
+          <div id="essay-fields" style="display:none">
+              <label class="form-label fw-bold small">Đáp án mẫu / Gợi ý:</label>
+              <textarea id="essay-answer-input" class="form-control border-2 shadow-none" rows="4"></textarea>
+          </div>
+          <input type="hidden" id="edit-index"><input type="hidden" id="edit-qtype">
+      </div>
+      <div class="modal-footer border-0 pb-4 px-4">
+        <button type="button" class="btn btn-light fw-bold px-4" data-bs-dismiss="modal">Hủy</button>
+        <button type="submit" class="btn btn-primary btn-rounded px-4">Lưu cập nhật</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+// 1. Hàm dọn dẹp nội dung (Xóa lặp nhãn A. A., 1. 1.)
+function cleanLabel(text) {
+    if (!text || typeof text !== 'string') return text;
+    return text.replace(/^([A-Z0-9][\.\:\-\s]+)+/i, '').trim();
+}
+
+const topicSel = document.getElementById('topic-select');
+const uploadInput = document.getElementById('current-topic-upload');
+const fileInput = document.getElementById('file-upload');
+const uploadBtn = document.querySelector('#upload-form button[type="submit"]');
+const fileListZone = document.getElementById('file-list-zone');
+const questionListZone = document.getElementById('question-list-zone');
+const qCountBadge = document.getElementById('q-count-badge');
+
+let cachedQuestions = [];
+
+function loadFiles(topic) {
+    if(!topic) {
+        fileListZone.innerHTML = '<div class="text-center py-4"><i class="fas fa-file-import fa-3x text-light mb-3"></i><p class="text-muted small">Chọn chủ đề để xem file.</p></div>';
+        fileInput.disabled = true; uploadBtn.disabled = true; uploadInput.value = '';
+        return;
+    }
+    fetch(`/api/get_topic_files/${encodeURIComponent(topic)}`)
+        .then(r => r.text())
+        .then(html => {
+            fileListZone.innerHTML = `<h6 class="fw-bold mb-3 text-primary">Tài liệu của "${topic}":</h6>` + html;
+            fileInput.disabled = false; uploadBtn.disabled = false; uploadInput.value = topic;
+            handleDeleteBtns();
+        });
+}
+
+function handleDeleteBtns() {
+    document.querySelectorAll('.btn-delete-file').forEach(btn => {
+        btn.onclick = function(e) {
+            e.preventDefault();
+            const topic = this.dataset.topic;
+            const fn = this.dataset.filename;
+            if(confirm(`Xóa file "${fn}"?`)) {
+                fetch(`/api/delete_topic_file/${encodeURIComponent(topic)}/${encodeURIComponent(fn)}`, {method: 'POST'})
+                .then(r=> r.json()).then(result => { if (result.success) loadFiles(topicSel.value); });
+            }
+        }
+    });
+}
+
+function renderQuestions(questions) {
+    if (!questions || questions.length === 0) {
+        qCountBadge.innerText = '0 câu hỏi';
+        return '<div class="text-center py-5"><i class="fas fa-ghost fa-3x text-light mb-3"></i><p class="text-muted small">Chưa có câu hỏi nào trong chủ đề này.</p></div>';
+    }
+    qCountBadge.innerText = questions.length + ' câu hỏi';
+    const groupMap = {};
+    questions.forEach(q => {
+        const gr = (q.type === "mcq" ? "Trắc nghiệm" : "Tự luận") + (q.difficulty ? " ("+q.difficulty+")" : "");
+        if(!groupMap[gr]) groupMap[gr] = [];
+        groupMap[gr].push(q);
+    });
+
+    let html = '';
+    Object.keys(groupMap).forEach(gr => {
+        html += `<h6 class="mt-4 fw-bold text-dark mb-3"><i class="fas fa-chevron-down me-2 text-primary"></i>${gr}</h6><ul class="list-group mb-3 shadow-sm">`;
+        groupMap[gr].forEach((q, idx) => {
+            let qText = cleanLabel(q.question);
+            html += `<li class="list-group-item p-3 question-item">
+                <div class="pe-5">
+                    <div class="mb-2"><b>Q${idx+1}:</b> ${qText}</div>
+                    ${q.options ? `<div class="small text-muted mb-2 ms-4"><b>Đáp án:</b> ${q.options.map((o,i)=>i==q.answer?`<mark>${cleanLabel(o)}</mark>`:cleanLabel(o)).join('; ')}</div>` : ""}
+                    ${q.answer && q.type==='essay'? `<div class="small text-muted mb-2 ms-4 fst-italic">Gợi ý: ${cleanLabel(q.answer)}</div>` : ""}
+                </div>
+
+                <div class="question-actions">
+                    <button class="btn-icon btn-edit-icon btn-edit-question" data-qindex="${q._idx || idx}" title="Sửa">
+                        <i class="fas fa-pen-to-square"></i>
+                    </button>
+                    <button class="btn-icon btn-delete-icon btn-delete-question" data-qindex="${q._idx || idx}" title="Xóa">
+                        <i class="fas fa-trash-can"></i>
+                    </button>
+                </div>
+            </li>`;
+        });
+        html += `</ul>`;
+    });
+    return html;
+}
+
+function loadQuestions(topic) {
+    if(!topic) {
+        questionListZone.innerHTML = '<div class="text-center py-5"><i class="fas fa-search fa-3x text-light mb-3"></i><p class="text-muted">Vui lòng chọn chủ đề để tải câu hỏi.</p></div>';
+        qCountBadge.innerText = '0 câu hỏi';
+        return;
+    }
+
+    // Hiện Spinner khi đang tải
+    questionListZone.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div><p class="text-muted mt-2">Đang tải dữ liệu...</p></div>';
+
+    fetch(`/api/get_questions/${encodeURIComponent(topic)}`)
+        .then(r => r.json())
+        .then(data => {
+            data.forEach((q, idx) => q._idx = idx);
+            cachedQuestions = data;
+            questionListZone.innerHTML = renderQuestions(data);
+            handleQuestionBtns(topic, data);
+        })
+        .catch(err => {
+            questionListZone.innerHTML = '<div class="alert alert-danger">Lỗi khi tải dữ liệu.</div>';
+        });
+}
+
+function handleQuestionBtns(topic, questions) {
+    document.querySelectorAll('.btn-delete-question').forEach(btn => {
+        btn.onclick = function() {
+            const idx = +this.dataset.qindex;
+            if(confirm('Xóa câu hỏi này?')) {
+                fetch(`/api/delete_question/${encodeURIComponent(topic)}/${idx}`, {method:'POST'})
+                .then(r=>r.json()).then(rs=>{ if(rs.success) loadQuestions(topic); });
+            }
+        }
+    });
+    document.querySelectorAll('.btn-edit-question').forEach(btn => {
+        btn.onclick = function() {
+            showEditModal(questions[+this.dataset.qindex], +this.dataset.qindex, topic);
+        }
+    });
+}
+
+function showEditModal(q, idx, topic) {
+    document.getElementById('edit-index').value = idx;
+    document.getElementById('edit-qtype').value = q.type;
+    // Dọn dẹp nhãn khi đưa vào form sửa
+    document.getElementById('question-input').value = cleanLabel(q.question);
+
+    if(q.type === "mcq") {
+        document.getElementById('mcq-fields').style.display = "";
+        document.getElementById('essay-fields').style.display = "none";
+        for(let i=0;i<4;i++) document.getElementById('opt'+i).value = cleanLabel(q.options?.[i] || "");
+        document.getElementById('answer-select').value = q.answer || 0;
+    } else {
+        document.getElementById('mcq-fields').style.display = "none";
+        document.getElementById('essay-fields').style.display = "";
+        document.getElementById('essay-answer-input').value = cleanLabel(q.answer || "");
+    }
+    new bootstrap.Modal(document.getElementById('editQuestionModal')).show();
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Lắng nghe thay đổi select
+    topicSel.addEventListener('change', function(){
+        loadFiles(this.value);
+        loadQuestions(this.value);
+    });
+
+    // Nếu khi load trang đã có sẵn topic (ví dụ sau khi redirect)
+    if(topicSel.value){
+        loadFiles(topicSel.value);
+        loadQuestions(topicSel.value);
+    } else {
+        // Nếu chưa chọn topic, hiển thị thông báo thay vì spinner
+        loadQuestions('');
+    }
+
+    document.getElementById('edit-question-form').addEventListener('submit', function(ev){
+        ev.preventDefault();
+        const topic = topicSel.value;
+        const qtype = document.getElementById('edit-qtype').value;
+        let body = {
+            question: document.getElementById('question-input').value.trim()
+        };
+        if(qtype === "mcq") {
+            body.options = [0,1,2,3].map(i => document.getElementById('opt'+i).value.trim());
+            body.answer = parseInt(document.getElementById('answer-select').value, 10);
+        } else {
+            body.answer = document.getElementById('essay-answer-input').value.trim();
+        }
+
+        fetch(`/api/edit_question/${encodeURIComponent(topic)}/${document.getElementById('edit-index').value}`, {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify(body)
+        }).then(r=>r.json()).then(rs=>{
+            if(rs.success) {
+                bootstrap.Modal.getInstance(document.getElementById('editQuestionModal')).hide();
+                loadQuestions(topic);
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

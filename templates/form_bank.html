@@ -1,0 +1,139 @@
+{% extends "index.html" %}
+
+{% block content %}
+<style>
+    .card-custom { border-radius: 15px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+    .btn-rounded { border-radius: 50px; font-weight: 600; }
+    .form-select, .form-control { border-radius: 10px; border: 2px solid #f1f1f1; transition: 0.3s; }
+    .form-select:focus, .form-control:focus { border-color: #3b82f6; box-shadow: none; }
+    .metrics-box { background: #1a1a1a; color: #00ff00; font-family: 'Courier New', Courier, monospace; border-radius: 12px; border-left: 5px solid #00ff00; }
+    .animate-fade-in { animation: fadeIn 0.5s ease-in-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+
+<div class="row mb-4">
+    <div class="col-12">
+        <h3 class="fw-bold mb-1">Sinh câu hỏi thông minh (AI)</h3>
+        <p class="text-muted small">Sử dụng trí tuệ nhân tạo để phân tích tài liệu và tự động tạo ngân hàng câu hỏi.</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-4">
+        <div class="card card-custom border-0 p-4">
+            <h5 class="fw-bold mb-4"><i class="fas fa-cog me-2 text-primary"></i>Thiết lập thông số</h5>
+
+            <form method="POST" id="question-form">
+                <div class="mb-4">
+                    <label class="form-label fw-semibold small">1. Chọn chủ đề nguồn:</label>
+                    <select name="topic" class="form-select" required>
+                        <option value="">-- Chọn chủ đề đã có tài liệu --</option>
+                        {% for t in topics %}
+                        <option value="{{ t }}" {% if current_topic==t %}selected{% endif %}>{{ t }}</option>
+                        {% endfor %}
+                    </select>
+                    <div class="form-text mt-1" style="font-size: 0.7rem;">Hệ thống sẽ quét các file đã upload trong chủ đề này.</div>
+                </div>
+
+                <div class="row g-3 mb-4">
+                    <div class="col-6">
+                        <label class="form-label fw-semibold small">Số câu trắc nghiệm:</label>
+                        <input type="number" name="num_mcq" class="form-control" value="10" min="0">
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label fw-semibold small">Số câu tự luận:</label>
+                        <input type="number" name="num_short" class="form-control" value="5" min="0">
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-semibold small">Mức độ ưu tiên của AI:</label>
+                    <select name="difficulty" class="form-select">
+                        <option value="Easy">Dễ (Câu hỏi định nghĩa, ngắn)</option>
+                        <option value="Medium" selected>Trung bình (Phân tích, hiểu nội dung)</option>
+                        <option value="Hard">Khó (Câu hỏi vận dụng, tổng hợp)</option>
+                    </select>
+                </div>
+
+                <div id="ai-progress-indicator" style="display:none;" class="mb-4 animate-fade-in">
+                    <div class="d-flex align-items-center justify-content-center p-3 rounded-3 bg-primary bg-opacity-10 text-primary fw-bold">
+                        <div class="spinner-border spinner-border-sm me-3" role="status"></div>
+                        AI đang đọc tài liệu, vui lòng chờ...
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-lg w-100 btn-rounded py-3 shadow-sm">
+                    <i class="fas fa-magic me-2"></i>Bắt đầu sinh câu hỏi
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-lg-8">
+        <div class="card card-custom border-0 p-4 h-100">
+            <h5 class="fw-bold mb-4"><i class="fas fa-chart-line me-2 text-success"></i>Kết quả & Chỉ số AI</h5>
+
+            {% if success %}
+                <div class="animate-fade-in">
+                    <div class="alert alert-success border-0 shadow-sm rounded-4 p-3 d-flex align-items-center mb-4">
+                        <i class="fas fa-check-circle fa-2x me-3"></i>
+                        <div>
+                            <h6 class="alert-heading fw-bold mb-0">Hoàn tất quy trình!</h6>
+                            <p class="mb-0 small">Đã tạo thành công <strong>{{ q_count }}</strong> câu hỏi mới vào ngân hàng.</p>
+                        </div>
+                    </div>
+
+                    <div class="metrics-box p-4 shadow-inner">
+                        <div class="d-flex justify-content-between align-items-center mb-3 border-bottom border-secondary pb-2">
+                            <span class="text-white small fw-bold uppercase">AI Evaluation Metrics:</span>
+                            <span class="badge bg-success" style="font-size: 0.6rem;">STABLE</span>
+                        </div>
+                        <pre class="mb-0 mt-2" style="font-size: 0.85rem; line-height: 1.5;">{{ metrics }}</pre>
+                    </div>
+                    <div class="mt-4">
+                        <a href="{{ url_for('manage_topic_files', selected_topic=current_topic) }}" class="btn btn-outline-primary btn-rounded btn-sm px-4">
+                            <i class="fas fa-external-link-alt me-2"></i>Xem ngay câu hỏi vừa tạo
+                        </a>
+                    </div>
+                </div>
+            {% elif metrics %}
+                <div class="animate-fade-in">
+                    <div class="alert alert-danger border-0 shadow-sm rounded-4 p-3 d-flex align-items-center">
+                        <i class="fas fa-exclamation-triangle fa-2x me-3"></i>
+                        <div>
+                            <h6 class="alert-heading fw-bold mb-0">Quá trình bị gián đoạn</h6>
+                            <pre class="mb-0 mt-2 small text-danger">{{ metrics }}</pre>
+                        </div>
+                    </div>
+                </div>
+            {% else %}
+                <div class="text-center py-5 opacity-50">
+                    <i class="fas fa-robot fa-4x text-light mb-4"></i>
+                    <p class="text-muted">Sau khi sinh câu hỏi, các chỉ số đánh giá (BLEU, ROUGE, METEOR...) sẽ hiển thị tại đây để bạn kiểm tra chất lượng AI.</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var form = document.getElementById('question-form');
+    var indicator = document.getElementById('ai-progress-indicator');
+    if (form && indicator) {
+        form.addEventListener('submit', function(e) {
+            // Ẩn nút submit và hiện indicator
+            form.querySelector('button[type="submit"]').style.display = 'none';
+            indicator.style.display = 'block';
+
+            // Một chút trễ để người dùng thấy animation trước khi form được gửi đi thực sự
+            setTimeout(() => {
+                form.submit();
+            }, 100);
+
+            e.preventDefault();
+        });
+    }
+});
+</script>
+{% endblock %}

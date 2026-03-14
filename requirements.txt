@@ -1,0 +1,11 @@
+Flask>=2.2
+python-docx
+pdfplumber
+sentence-transformers
+nltk
+rouge-score
+groq
+cython
+setuptools
+mammoth
+numpy
