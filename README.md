@@ -1,4 +1,4 @@
-# AI-Exam-Generator-Flask-OpenAI-Groq-Docx-
+# AI-Exam-Generator-DTU
 
 Ứng dụng tạo ngân hàng câu hỏi và xuất đề thi/mã đề/đáp án tự động cho giáo viên/trường học, hỗ trợ AI, xuất file Word chuẩn hội đồng.
 
