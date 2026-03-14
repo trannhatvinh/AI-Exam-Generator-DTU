@@ -31,7 +31,7 @@
 ### Clone code và cài đặt thư viện
 
 ```bash
-git clone https://github.com/trannhatvinh/AI-Exam-Generator-Flask-OpenAI-Groq-Docx-.git
+git clone https://github.com/trannhatvinh/AI-Exam-Generator-DTU.git
 cd AI-Exam-Generator-Flask-OpenAI-Groq-Docx-
 python -m venv .venv
 .venv\Scripts\activate       # (Windows)
